@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="saffron">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>মুদ্রা বিনিময় | লাইভ কারেন্সি এক্সচেঞ্জ (INR)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root,
+    [data-theme="saffron"] {
+      --bg-page: #fffaf2;
+      --bg-card: rgba(255, 255, 255, 0.92);
+      --bg-elevated: #fff3e0;
+      --bg-inr: linear-gradient(135deg, #1e1b4b 0%, #312e81 55%, #4338ca 100%);
+      --accent-primary: #ea580c;
+      --accent-secondary: #4f46e5;
+      --accent-soft: #ffedd5;
+      --accent-soft-text: #9a3412;
+      --text-main: #1e1b4b;
+      --text-muted: #5b5876;
+      --border-subtle: rgba(234, 88, 12, 0.16);
+      --blob-1: rgba(251, 146, 60, 0.24);
+      --blob-2: rgba(99, 102, 241, 0.18);
+      --blob-3: rgba(244, 63, 94, 0.14);
+      --chart-line: #ea580c;
+      --chart-fill: rgba(234, 88, 12, 0.14);
+    }
+
+    [data-theme="emerald"] {
+      --bg-page: #f2fbf7;
+      --bg-card: rgba(255, 255, 255, 0.92);
+      --bg-elevated: #e6f7ef;
+      --bg-inr: linear-gradient(135deg, #064e3b 0%, #047857 55%, #0d9488 100%);
+      --accent-primary: #059669;
+      --accent-secondary: #e11d48;
+      --accent-soft: #d1fae5;
+      --accent-soft-text: #065f46;
+      --text-main: #064e3b;
+      --text-muted: #3f6b5c;
+      --border-subtle: rgba(5, 150, 105, 0.18);
+      --blob-1: rgba(16, 185, 129, 0.22);
+      --blob-2: rgba(244, 63, 94, 0.15);
+      --blob-3: rgba(14, 165, 233, 0.16);
+      --chart-line: #059669;
+      --chart-fill: rgba(5, 150, 105, 0.14);
+    }
+
+    [data-theme="amethyst"] {
+      --bg-page: #faf6ff;
+      --bg-card: rgba(255, 255, 255, 0.92);
+      --bg-elevated: #f3e8ff;
+      --bg-inr: linear-gradient(135deg, #3b0764 0%, #6b21a8 55%, #7e22ce 100%);
+      --accent-primary: #9333ea;
+      --accent-secondary: #d97706;
+      --accent-soft: #f3e8ff;
+      --accent-soft-text: #6b21a8;
+      --text-main: #2e1065;
+      --text-muted: #6b538c;
+      --border-subtle: rgba(147, 51, 234, 0.18);
+      --blob-1: rgba(168, 85, 247, 0.22);
+      --blob-2: rgba(245, 158, 11, 0.18);
+      --blob-3: rgba(236, 72, 153, 0.14);
+      --chart-line: #9333ea;
+      --chart-fill: rgba(147, 51, 234, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', 'Noto Sans Bengali', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      transition: background-color 0.45s ease, color 0.35s ease;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    .ambient-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .ambient-blob {
+      position: absolute;
+      border-radius: 9999px;
+      filter: blur(72px);
+      transition: background 0.6s ease;
+      animation: floatBlob 16s ease-in-out infinite alternate;
+    }
+
+    .blob-a {
+      width: 340px;
+      height: 340px;
+      top: -90px;
+      right: -70px;
+      background: var(--blob-1);
+    }
+
+    .blob-b {
+      width: 380px;
+      height: 380px;
+      bottom: -120px;
+      left: -100px;
+      background: var(--blob-2);
+      animation-delay: -5s;
+    }
+
+    .blob-c {
+      width: 260px;
+      height: 260px;
+      top: 42%;
+      left: 50%;
+      background: var(--blob-3);
+      animation-delay: -9s;
+    }
+
+    @keyframes floatBlob {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(24px, -28px) scale(1.08); }
+    }
+
+    .surface-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      box-shadow: 0 14px 40px -16px rgba(15, 23, 42, 0.12);
+      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease, border-color 0.3s ease;
+    }
+
+    .inr-locked-card {
+      background: var(--bg-inr);
+      color: #ffffff;
+      box-shadow: 0 18px 42px -14px rgba(30, 27, 75, 0.38);
+      transition: background 0.45s ease, transform 0.25s ease;
+    }
+
+    .currency-pill {
+      transition: all 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+      border: 1.5px solid transparent;
+    }
+
+    .currency-pill:hover {
+      transform: translateY(-2px);
+    }
+
+    .currency-pill.active {
+      background: var(--accent-soft);
+      color: var(--accent-soft-text);
+      border-color: var(--accent-primary);
+      box-shadow: 0 8px 20px -8px var(--accent-primary);
+    }
+
+    .market-card {
+      transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.24s ease, box-shadow 0.24s ease;
+      cursor: pointer;
+    }
+
+    .market-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 28px -12px rgba(15, 23, 42, 0.15);
+    }
+
+    .market-card.selected {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 2px var(--accent-soft), 0 14px 28px -12px rgba(15, 23, 42, 0.14);
+    }
+
+    @keyframes valuePop {
+      0% { transform: scale(0.97); opacity: 0.72; }
+      60% { transform: scale(1.015); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .value-pop {
+      animation: valuePop 0.26s ease-out;
+    }
+
+    @keyframes spinSlow {
+      to { transform: rotate(360deg); }
+    }
+
+    .spinning {
+      animation: spinSlow 0.85s linear infinite;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    .toast-banner {
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-orange-200 selection:text-slate-900">
+  <!-- Ambient Background -->
+  <div class="ambient-canvas" aria-hidden="true">
+    <div class="ambient-blob blob-a"></div>
+    <div class="ambient-blob blob-b"></div>
+    <div class="ambient-blob blob-c"></div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast-banner fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full bg-slate-900 text-white text-sm font-medium shadow-xl opacity-0 pointer-events-none translate-y-3 flex items-center gap-2">
+    <svg class="w-4 h-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    <span id="toastText">কপি করা হয়েছে</span>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
+    <!-- Top Header & Theme Bar -->
+    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-white shadow-md shrink-0" style="background: var(--accent-primary);">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight">মুদ্রা বিনিময়</h1>
+            <span id="liveBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+              <span id="liveDot" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span id="liveBadgeText">লাইভ মার্কেট</span>
+            </span>
+          </div>
+          <p class="text-xs sm:text-sm mt-0.5" style="color: var(--text-muted);">বিশ্বের প্রধান মুদ্রা থেকে সরাসরি ভারতীয় রুপি (INR) হিসাব</p>
+        </div>
+      </div>
+
+      <!-- Curated Theme Switcher & Refresh -->
+      <div class="flex items-center justify-between sm:justify-end gap-2.5 flex-wrap">
+        <div class="surface-card rounded-full p-1 flex items-center gap-1" role="group" aria-label="রঙের থিম নির্বাচন">
+          <button type="button" data-theme-btn="saffron" class="theme-btn px-2.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition" title="স্যাফ্রন ও ইন্ডিগো">
+            <span class="w-3 h-3 rounded-full bg-orange-500 ring-2 ring-indigo-900/20"></span>
+            <span>স্যাফ্রন</span>
+          </button>
+          <button type="button" data-theme-btn="emerald" class="theme-btn px-2.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition" title="এমেরাল্ড ও কোরাল">
+            <span class="w-3 h-3 rounded-full bg-emerald-600 ring-2 ring-rose-500/20"></span>
+            <span>এমেরাল্ড</span>
+          </button>
+          <button type="button" data-theme-btn="amethyst" class="theme-btn px-2.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition" title="অ্যামেথিস্ট ও অ্যাম্বার">
+            <span class="w-3 h-3 rounded-full bg-purple-600 ring-2 ring-amber-500/20"></span>
+            <span>অ্যামেথিস্ট</span>
+          </button>
+        </div>
+
+        <button id="refreshBtn" type="button" class="surface-card px-3.5 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 hover:opacity-90 active:scale-95 transition">
+          <svg id="refreshIcon" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+            <path d="M16 16h5v5" />
+          </svg>
+          <span>রিফ্রেশ</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Converter + Intraday Chart Grid -->
+    <main class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
+      <!-- Left Column: Vertical Converter (Top: Foreign Currency -> Bottom: Always INR) -->
+      <section class="lg:col-span-6 flex flex-col gap-3">
+        <!-- TOP CARD: Foreign Source Currency -->
+        <div class="surface-card rounded-3xl p-5 sm:p-6">
+          <div class="flex items-center justify-between gap-2 mb-3.5">
+            <span class="text-xs font-bold uppercase tracking-wider" style="color: var(--text-muted);">উপরের মুদ্রা (দেশ নির্বাচন করুন)</span>
+            <button id="clearAmountBtn" type="button" class="text-xs font-semibold px-2.5 py-1 rounded-lg hover:bg-black/5 transition" style="color: var(--accent-primary);">রিসেট</button>
+          </div>
+
+          <!-- 4 Country Currency Selector Pills -->
+          <div id="currencySelector" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+            <!-- Populated via JS -->
+          </div>
+
+          <!-- Manual Amount Label -->
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <label for="amountInput" class="text-xs font-semibold flex items-center gap-1.5" style="color: var(--text-muted);">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              <span>ম্যানুয়াল পরিমাণ লিখুন (যেমন 30, 750)</span>
+            </label>
+            <button id="emptyInputBtn" type="button" class="text-xs font-semibold px-2 py-0.5 rounded-md bg-black/5 hover:bg-black/10 transition" style="color: var(--text-muted);">মুছুন</button>
+          </div>
+
+          <!-- Amount Input Box -->
+          <div class="rounded-2xl p-3.5 sm:p-4 min-h-[64px] flex items-center justify-between gap-3 border-2 transition focus-within:ring-2" style="background: var(--bg-elevated); border-color: var(--border-subtle); --tw-ring-color: var(--accent-primary);">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div id="selectedFlagBox" class="w-9 h-9 rounded-xl overflow-hidden shadow-sm shrink-0 bg-white flex items-center justify-center"></div>
+              <div class="min-w-0">
+                <div id="selectedCodeLabel" class="text-base font-bold leading-tight">USD</div>
+                <div id="selectedNameLabel" class="text-xs truncate" style="color: var(--text-muted);">মার্কিন যুক্তরাষ্ট্র</div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-1.5 flex-1 justify-end">
+              <span id="selectedSymbolPrefix" class="text-xl sm:text-2xl font-bold opacity-60">$</span>
+              <input
+                id="amountInput"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                step="any"
+                value="100"
+                placeholder="0"
+                aria-label="ম্যানুয়ালি বিনিময়ের পরিমাণ লিখুন"
+                class="w-full max-w-[180px] bg-transparent text-right text-2xl sm:text-3xl font-extrabold outline-none tabular-nums"
+              />
+            </div>
+          </div>
+
+          <!-- Quick Amount Chips -->
+          <div class="flex items-center gap-1.5 flex-wrap mt-3">
+            <span class="text-xs font-medium mr-1" style="color: var(--text-muted);">দ্রুত পরিমাণ:</span>
+            <button type="button" data-quick="1" class="quick-amt px-2.5 py-1 rounded-full text-xs font-semibold bg-black/5 hover:bg-black/10 transition">1</button>
+            <button type="button" data-quick="10" class="quick-amt px-2.5 py-1 rounded-full text-xs font-semibold bg-black/5 hover:bg-black/10 transition">10</button>
+            <button type="button" data-quick="30" class="quick-amt px-2.5 py-1 rounded-full text-xs font-semibold bg-black/5 hover:bg-black/10 transition">30</button>
+            <button type="button" data-quick="50" class="quick-amt px-2.5 py-1 rounded-full text-xs font-semibold bg-black/5 hover:bg-black/10 transition">50</button>
+            <button type="button" data-quick="100" class="quick-amt px-2.5 py-1 rounded-full text-xs font-semibold bg-black/5 hover:bg-black/10 transition">100</button>
+            <button type="button" data-quick="500" class="quick-amt px-2.5 py-1 rounded-full text-xs font-semibold bg-black/5 hover:bg-black/10 transition">500</button>
+            <button type="button" data-quick="750" class="quick-amt px-2.5 py-1 rounded-full text-xs font-semibold bg-black/5 hover:bg-black/10 transition">750</button>
+            <button type="button" data-quick="1000" class="quick-amt px-2.5 py-1 rounded-full text-xs font-semibold bg-black/5 hover:bg-black/10 transition">1,000</button>
+          </div>
+        </div>
+
+        <!-- Center Flow Indicator -->
+        <div class="flex justify-center -my-5 z-10 pointer-events-none">
+          <div class="w-10 h-10 rounded-full bg-white shadow-lg border flex items-center justify-center" style="border-color: var(--border-subtle); color: var(--accent-primary);">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14" />
+              <path d="m19 12-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+
+        <!-- BOTTOM CARD: ALWAYS LOCKED TO INR -->
+        <div class="inr-locked-card rounded-3xl p-5 sm:p-6 relative overflow-hidden">
+          <div class="flex items-center justify-between gap-2 mb-4">
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/15 text-white backdrop-blur-sm">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                <span>সর্বদা ভারতীয় রুপি</span>
+              </span>
+            </div>
+            <button id="copyResultBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/15 hover:bg-white/25 active:scale-95 transition text-white">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+              </svg>
+              <span>কপি</span>
+            </button>
+          </div>
+
+          <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div id="indiaFlagBox" class="w-10 h-10 rounded-xl overflow-hidden shadow-md bg-white shrink-0"></div>
+              <div>
+                <div class="text-lg font-bold leading-tight">INR</div>
+                <div class="text-xs text-white/75">ভারতীয় রুপি (Indian Rupee)</div>
+              </div>
+            </div>
+
+            <div class="text-left sm:text-right">
+              <div class="text-xs text-white/70 mb-0.5">মোট প্রাপ্ত টাকা</div>
+              <div id="convertedOutput" class="text-3xl sm:text-4xl font-extrabold tracking-tight tabular-nums">₹9,332.50</div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3.5 border-t border-white/15 flex flex-wrap items-center justify-between gap-2 text-xs text-white/85">
+            <div id="unitRateText" class="font-semibold tabular-nums">1 USD = ₹93.3250 INR</div>
+            <div id="inverseRateText" class="text-white/70 tabular-nums">1 INR = 0.010715 USD</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Live Intraday Trend Chart & Quick Table -->
+      <section class="lg:col-span-6 flex flex-col gap-5">
+        <!-- Intraday Chart Card -->
+        <div class="surface-card rounded-3xl p-5 sm:p-6">
+          <div class="flex items-start justify-between gap-3 mb-4">
+            <div>
+              <h2 id="chartTitle" class="text-base sm:text-lg font-bold">USD থেকে INR লাইভ গ্রাফ</h2>
+              <p id="chartSubtitle" class="text-xs mt-0.5" style="color: var(--text-muted);">আজকের মার্কেট ওঠানামা ও বর্তমান রেট</p>
+            </div>
+            <div class="text-right">
+              <div id="chartCurrentRate" class="text-lg font-extrabold tabular-nums">₹93.3250</div>
+              <div id="chartChangeBadge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"></div>
+            </div>
+          </div>
+
+          <div class="relative h-56 sm:h-64 w-full">
+            <canvas id="rateChart"></canvas>
+          </div>
+
+          <div class="mt-3 pt-3 border-t flex flex-wrap items-center justify-between gap-2 text-xs" style="border-color: var(--border-subtle); color: var(--text-muted);">
+            <span id="lastUpdatedText">আপডেট: যাচাই করা হচ্ছে...</span>
+            <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+              <input id="autoRefreshToggle" type="checkbox" checked class="sr-only peer" />
+              <span class="w-8 h-4.5 rounded-full bg-slate-300 peer-checked:bg-emerald-500 relative transition-colors inline-block after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-3.5 after:h-3.5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-3.5"></span>
+              <span id="autoRefreshLabel" class="font-medium tabular-nums">লাইভ আপডেট (১০ সেকেন্ড)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Quick Reference Table -->
+        <div class="surface-card rounded-3xl p-5 sm:p-6">
+          <div class="flex items-center justify-between mb-3">
+            <h3 id="tableTitle" class="text-sm sm:text-base font-bold">USD থেকে INR চার্ট</h3>
+            <span class="text-xs font-medium px-2.5 py-0.5 rounded-full" style="background: var(--accent-soft); color: var(--accent-soft-text);">তাৎক্ষণিক হিসাব</span>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5" id="referenceGrid">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Live Market Board: All 4 Currencies at a Glance -->
+    <section class="mt-6 sm:mt-8">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+        <div>
+          <h2 class="text-lg sm:text-xl font-bold">লাইভ মার্কেট বোর্ড (৪টি প্রধান দেশ → ভারত)</h2>
+          <p class="text-xs sm:text-sm" style="color: var(--text-muted);">যেকোনো দেশের কার্ডে ট্যাপ করে সরাসরি কনভার্টারে সেট করুন</p>
+        </div>
+        <div id="apiSourceNote" class="text-xs font-medium" style="color: var(--text-muted);">উৎস: লাইভ এক্সচেঞ্জ API</div>
+      </div>
+
+      <div id="marketBoard" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Populated via JS -->
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Vector SVG Flags (Zero emojis)
+    const FLAGS = {
+      USD: `<svg viewBox="0 0 36 24" class="w-full h-full object-cover"><rect width="36" height="24" fill="#fff"/><g fill="#b22234"><rect y="0" width="36" height="1.85"/><rect y="3.7" width="36" height="1.85"/><rect y="7.4" width="36" height="1.85"/><rect y="11.1" width="36" height="1.85"/><rect y="14.8" width="36" height="1.85"/><rect y="18.5" width="36" height="1.85"/><rect y="22.2" width="36" height="1.85"/></g><rect width="15" height="12.95" fill="#3c3b6e"/><g fill="#fff"><circle cx="3" cy="2.5" r="0.7"/><circle cx="7.5" cy="2.5" r="0.7"/><circle cx="12" cy="2.5" r="0.7"/><circle cx="5.2" cy="5" r="0.7"/><circle cx="9.8" cy="5" r="0.7"/><circle cx="3" cy="7.5" r="0.7"/><circle cx="7.5" cy="7.5" r="0.7"/><circle cx="12" cy="7.5" r="0.7"/><circle cx="5.2" cy="10" r="0.7"/><circle cx="9.8" cy="10" r="0.7"/></g></svg>`,
+      JPY: `<svg viewBox="0 0 36 24" class="w-full h-full object-cover"><rect width="36" height="24" fill="#ffffff"/><circle cx="18" cy="12" r="6.5" fill="#bc002d"/></svg>`,
+      CNY: `<svg viewBox="0 0 36 24" class="w-full h-full object-cover"><rect width="36" height="24" fill="#de2910"/><polygon points="6,2.8 7,5.8 9.8,5.8 7.5,7.5 8.4,10.3 6,8.6 3.6,10.3 4.5,7.5 2.2,5.8 5,5.8" fill="#ffde00"/><circle cx="12" cy="3" r="0.9" fill="#ffde00"/><circle cx="13.8" cy="5.2" r="0.9" fill="#ffde00"/><circle cx="13.8" cy="8.2" r="0.9" fill="#ffde00"/><circle cx="12" cy="10.4" r="0.9" fill="#ffde00"/></svg>`,
+      RUB: `<svg viewBox="0 0 36 24" class="w-full h-full object-cover"><rect width="36" height="8" y="0" fill="#ffffff"/><rect width="36" height="8" y="8" fill="#0039a6"/><rect width="36" height="8" y="16" fill="#d52b1e"/></svg>`,
+      INR: `<svg viewBox="0 0 36 24" class="w-full h-full object-cover"><rect width="36" height="8" y="0" fill="#ff9933"/><rect width="36" height="8" y="8" fill="#ffffff"/><rect width="36" height="8" y="16" fill="#138808"/><circle cx="18" cy="12" r="3.1" fill="none" stroke="#000080" stroke-width="0.7"/><circle cx="18" cy="12" r="0.7" fill="#000080"/></svg>`
+    };
+
+    // Grounded Baseline Market Data (Nov 18, 2026) & Metadata
+    const CURRENCIES = {
+      USD: {
+        code: 'USD',
+        countryBn: 'মার্কিন যুক্তরাষ্ট্র',
+        currencyBn: 'মার্কিন ডলার',
+        symbol: '$',
+        accent: '#2563eb',
+        baseRate: 93.325,
+        changePct: -0.16,
+        series: [93.475, 93.441, 93.425, 93.445, 93.511, 93.329, 93.263, 93.389, 93.458, 93.388, 93.379, 93.325],
+        labels: ['05:30', '06:40', '07:30', '08:35', '08:55', '09:10', '09:45', '10:20', '10:45', '11:15', '11:50', '12:20']
+      },
+      JPY: {
+        code: 'JPY',
+        countryBn: 'জাপান',
+        currencyBn: 'জাপানি ইয়েন',
+        symbol: '¥',
+        accent: '#e11d48',
+        baseRate: 0.586005,
+        changePct: 0.001,
+        series: [0.5860, 0.5859, 0.5857, 0.5862, 0.5866, 0.5864, 0.5854, 0.5853, 0.5863, 0.5870, 0.5863, 0.5860],
+        labels: ['05:30', '06:40', '07:30', '08:35', '08:55', '09:10', '09:45', '10:20', '10:45', '11:15', '11:50', '12:20']
+      },
+      CNY: {
+        code: 'CNY',
+        countryBn: 'চীন',
+        currencyBn: 'চীনা ইউয়ান',
+        symbol: '¥',
+        accent: '#dc2626',
+        baseRate: 14.00011,
+        changePct: -0.15,
+        series: [14.021, 14.024, 14.022, 14.022, 14.023, 14.002, 13.995, 14.004, 14.018, 14.009, 14.010, 14.000],
+        labels: ['05:30', '06:40', '07:30', '08:35', '08:55', '09:10', '09:45', '10:20', '10:45', '11:15', '11:50', '12:20']
+      },
+      RUB: {
+        code: 'RUB',
+        countryBn: 'রাশিয়া',
+        currencyBn: 'রুশ রুবল',
+        symbol: '₽',
+        accent: '#0284c7',
+        baseRate: 1.135335,
+        changePct: -0.34,
+        series: [1.1392, 1.1368, 1.1365, 1.1368, 1.1376, 1.1351, 1.1346, 1.1361, 1.1370, 1.1361, 1.1358, 1.1353],
+        labels: ['05:30', '06:40', '07:30', '08:35', '08:55', '09:10', '09:45', '10:20', '10:45', '11:15', '11:50', '12:20']
+      }
+    };
+
+    const CURRENCY_ORDER = ['USD', 'JPY', 'CNY', 'RUB'];
+
+    const state = {
+      source: 'USD',
+      amount: 100,
+      theme: 'saffron',
+      autoRefresh: true,
+      isLive: false,
+      lastUpdated: null,
+      rates: {
+        USD: CURRENCIES.USD.baseRate,
+        JPY: CURRENCIES.JPY.baseRate,
+        CNY: CURRENCIES.CNY.baseRate,
+        RUB: CURRENCIES.RUB.baseRate
+      }
+    };
+
+    let chartInstance = null;
+    let refreshTimer = null;
+    let countdownTimer = null;
+    let secondsLeft = 10;
+    let toastTimer = null;
+
+    // DOM References
+    const el = {
+      currencySelector: document.getElementById('currencySelector'),
+      selectedFlagBox: document.getElementById('selectedFlagBox'),
+      selectedCodeLabel: document.getElementById('selectedCodeLabel'),
+      selectedNameLabel: document.getElementById('selectedNameLabel'),
+      selectedSymbolPrefix: document.getElementById('selectedSymbolPrefix'),
+      amountInput: document.getElementById('amountInput'),
+      clearAmountBtn: document.getElementById('clearAmountBtn'),
+      emptyInputBtn: document.getElementById('emptyInputBtn'),
+      autoRefreshLabel: document.getElementById('autoRefreshLabel'),
+      indiaFlagBox: document.getElementById('indiaFlagBox'),
+      convertedOutput: document.getElementById('convertedOutput'),
+      unitRateText: document.getElementById('unitRateText'),
+      inverseRateText: document.getElementById('inverseRateText'),
+      copyResultBtn: document.getElementById('copyResultBtn'),
+      chartTitle: document.getElementById('chartTitle'),
+      chartCurrentRate: document.getElementById('chartCurrentRate'),
+      chartChangeBadge: document.getElementById('chartChangeBadge'),
+      lastUpdatedText: document.getElementById('lastUpdatedText'),
+      autoRefreshToggle: document.getElementById('autoRefreshToggle'),
+      refreshBtn: document.getElementById('refreshBtn'),
+      refreshIcon: document.getElementById('refreshIcon'),
+      liveBadge: document.getElementById('liveBadge'),
+      liveDot: document.getElementById('liveDot'),
+      liveBadgeText: document.getElementById('liveBadgeText'),
+      apiSourceNote: document.getElementById('apiSourceNote'),
+      tableTitle: document.getElementById('tableTitle'),
+      referenceGrid: document.getElementById('referenceGrid'),
+      marketBoard: document.getElementById('marketBoard'),
+      toast: document.getElementById('toast'),
+      toastText: document.getElementById('toastText')
+    };
+
+    function showToast(msg) {
+      el.toastText.textContent = msg;
+      el.toast.classList.remove('opacity-0', 'translate-y-3', 'pointer-events-none');
+      el.toast.classList.add('opacity-100', 'translate-y-0');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        el.toast.classList.add('opacity-0', 'translate-y-3', 'pointer-events-none');
+        el.toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 2200);
+    }
+
+    function formatINR(val) {
+      if (!Number.isFinite(val)) return '₹0.00';
+      return '₹' + val.toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function formatRate(val) {
+      if (!Number.isFinite(val)) return '0.00';
+      return val >= 10 ? val.toFixed(4) : val.toFixed(4);
+    }
+
+    function applyTheme(themeName) {
+      state.theme = themeName;
+      document.documentElement.setAttribute('data-theme', themeName);
+      try {
+        localStorage.setItem('fx_inr_theme', themeName);
+      } catch (e) {}
+
+      document.querySelectorAll('.theme-btn').forEach((btn) => {
+        const active = btn.dataset.themeBtn === themeName;
+        if (active) {
+          btn.style.background = 'var(--accent-soft)';
+          btn.style.color = 'var(--accent-soft-text)';
+        } else {
+          btn.style.background = 'transparent';
+          btn.style.color = 'var(--text-muted)';
+        }
+      });
+
+      if (chartInstance) {
+        updateChart();
+      }
+    }
+
+    function renderSelectorPills() {
+      el.currencySelector.innerHTML = CURRENCY_ORDER.map((code) => {
+        const c = CURRENCIES[code];
+        const isActive = state.source === code;
+        return `
+          <button type="button" data-select-currency="${code}" class="currency-pill ${isActive ? 'active' : 'bg-black/5 hover:bg-black/10'} rounded-2xl p-2.5 flex items-center gap-2 text-left">
+            <span class="w-6 h-4 rounded overflow-hidden shadow-sm shrink-0">${FLAGS[code]}</span>
+            <span class="min-w-0">
+              <span class="block text-xs font-extrabold leading-tight">${c.code}</span>
+              <span class="block text-[10px] opacity-75 truncate">${c.countryBn}</span>
+            </span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function renderConverter() {
+      const c = CURRENCIES[state.source];
+      const rate = state.rates[state.source] || c.baseRate;
+      const amount = Math.max(0, Number(state.amount) || 0);
+      const converted = amount * rate;
+      const inverse = rate > 0 ? 1 / rate : 0;
+
+      el.selectedFlagBox.innerHTML = FLAGS[state.source];
+      el.selectedCodeLabel.textContent = c.code;
+      el.selectedNameLabel.textContent = `${c.countryBn} • ${c.currencyBn}`;
+      el.selectedSymbolPrefix.textContent = c.symbol;
+
+      el.convertedOutput.textContent = formatINR(converted);
+      el.convertedOutput.classList.remove('value-pop');
+      void el.convertedOutput.offsetWidth;
+      el.convertedOutput.classList.add('value-pop');
+
+      el.unitRateText.textContent = `1 ${c.code} = ₹${formatRate(rate)} INR`;
+      el.inverseRateText.textContent = `1 INR = ${inverse.toFixed(6)} ${c.code}`;
+
+      // Highlight active quick chip
+      document.querySelectorAll('.quick-amt').forEach((btn) => {
+        const v = Number(btn.dataset.quick);
+        if (v === amount) {
+          btn.style.background = 'var(--accent-soft)';
+          btn.style.color = 'var(--accent-soft-text)';
+        } else {
+          btn.style.background = '';
+          btn.style.color = '';
+        }
+      });
+
+      renderReferenceGrid();
+    }
+
+    function renderReferenceGrid() {
+      const c = CURRENCIES[state.source];
+      const rate = state.rates[state.source] || c.baseRate;
+      const units = [1, 5, 10, 50, 100, 1000];
+      el.tableTitle.textContent = `${c.code} থেকে INR রূপান্তর তালিকা`;
+
+      el.referenceGrid.innerHTML = units.map((u) => `
+        <div class="rounded-2xl p-3 border transition hover:scale-[1.02]" style="background: var(--bg-elevated); border-color: var(--border-subtle);">
+          <div class="text-xs font-semibold" style="color: var(--text-muted);">${c.symbol}${u.toLocaleString('en-US')} ${c.code}</div>
+          <div class="text-sm font-extrabold mt-0.5 tabular-nums">${formatINR(u * rate)}</div>
+        </div>
+      `).join('');
+    }
+
+    function buildSparklineSVG(series, isPositive) {
+      const min = Math.min(...series);
+      const max = Math.max(...series);
+      const span = max - min || 1e-6;
+      const w = 100;
+      const h = 30;
+      const pts = series.map((v, i) => {
+        const x = (i / (series.length - 1)) * w;
+        const y = h - ((v - min) / span) * (h - 6) - 3;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(' ');
+      const stroke = isPositive ? '#059669' : '#e11d48';
+      return `<svg viewBox="0 0 ${w} ${h}" class="w-20 h-7 overflow-visible"><polyline fill="none" stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${pts}" /></svg>`;
+    }
+
+    function renderMarketBoard() {
+      el.marketBoard.innerHTML = CURRENCY_ORDER.map((code) => {
+        const c = CURRENCIES[code];
+        const rate = state.rates[code] || c.baseRate;
+        const isSelected = state.source === code;
+        const isPos = c.changePct >= 0;
+        const sign = isPos ? '+' : '';
+        const badgeClass = isPos ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800';
+
+        return `
+          <div role="button" tabindex="0" data-board-currency="${code}" class="market-card surface-card rounded-3xl p-4 sm:p-5 ${isSelected ? 'selected' : ''}">
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-5.5 rounded overflow-hidden shadow-sm shrink-0">${FLAGS[code]}</div>
+                <div>
+                  <div class="text-sm font-extrabold leading-tight">${c.code} / INR</div>
+                  <div class="text-[11px]" style="color: var(--text-muted);">${c.countryBn}</div>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-bold tabular-nums ${badgeClass}">${sign}${c.changePct.toFixed(2)}%</span>
+            </div>
+
+            <div class="flex items-end justify-between gap-2">
+              <div>
+                <div class="text-[11px]" style="color: var(--text-muted);">১ ${c.code} সমান</div>
+                <div class="text-lg sm:text-xl font-extrabold tabular-nums">₹${formatRate(rate)}</div>
+              </div>
+              ${buildSparklineSVG(c.series, isPos)}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateChart() {
+      const c = CURRENCIES[state.source];
+      const rate = state.rates[state.source] || c.baseRate;
+      const isPos = c.changePct >= 0;
+      const sign = isPos ? '+' : '';
+
+      el.chartTitle.textContent = `${c.code} থেকে INR লাইভ গ্রাফ`;
+      el.chartCurrentRate.textContent = `₹${formatRate(rate)}`;
+      el.chartChangeBadge.textContent = `${sign}${c.changePct.toFixed(2)}% আজ`;
+      el.chartChangeBadge.className = `inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${isPos ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`;
+
+      const computedStyle = getComputedStyle(document.documentElement);
+      const lineColor = computedStyle.getPropertyValue('--chart-line').trim() || '#ea580c';
+      const fillColor = computedStyle.getPropertyValue('--chart-fill').trim() || 'rgba(234, 88, 12, 0.14)';
+
+      const ctx = document.getElementById('rateChart').getContext('2d');
+      if (chartInstance) {
+        chartInstance.data.labels = c.labels;
+        chartInstance.data.datasets[0].data = c.series;
+        chartInstance.data.datasets[0].borderColor = lineColor;
+        chartInstance.data.datasets[0].backgroundColor = fillColor;
+        chartInstance.data.datasets[0].pointHoverBackgroundColor = lineColor;
+        chartInstance.update();
+        return;
+      }
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: c.labels,
+          datasets: [{
+            label: `${c.code} -> INR`,
+            data: c.series,
+            borderColor: lineColor,
+            backgroundColor: fillColor,
+            borderWidth: 2.5,
+            fill: true,
+            tension: 0.35,
+            pointRadius: 2.5,
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: lineColor
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1e1b4b',
+              padding: 10,
+              cornerRadius: 10,
+              callbacks: {
+                label: (ctxItem) => ` ₹${Number(ctxItem.parsed.y).toFixed(4)} INR`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 11 }, maxTicksLimit: 6 }
+            },
+            y: {
+              grid: { color: 'rgba(148, 163, 184, 0.16)' },
+              ticks: {
+                font: { size: 11 },
+                callback: (val) => '₹' + Number(val).toFixed(rate < 2 ? 3 : 2)
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateStatusUI(isLive, sourceLabel) {
+      state.isLive = isLive;
+      const nowStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      el.lastUpdatedText.textContent = `সর্বশেষ আপডেট: ${nowStr} IST`;
+      el.apiSourceNote.textContent = `উৎস: ${sourceLabel}`;
+
+      if (isLive) {
+        el.liveBadge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800';
+        el.liveDot.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+        el.liveBadgeText.textContent = 'লাইভ মার্কেট';
+      } else {
+        el.liveBadge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800';
+        el.liveDot.className = 'w-2 h-2 rounded-full bg-amber-500';
+        el.liveBadgeText.textContent = 'ক্যাশড মার্কেট রেট';
+      }
+    }
+
+    async function fetchLiveRates(manual = false) {
+      el.refreshIcon.classList.add('spinning');
+      let updated = false;
+      let sourceLabel = 'যাচাইকৃত মার্কেট বেসলাইন';
+
+      try {
+        const res = await fetch(`https://open.er-api.com/v6/latest/INR?t=${Date.now()}`, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.rates) {
+            CURRENCY_ORDER.forEach((code) => {
+              if (data.rates[code] && data.rates[code] > 0) {
+                const newRate = 1 / data.rates[code];
+                state.rates[code] = newRate;
+                const series = CURRENCIES[code].series;
+                series[series.length - 1] = Number(newRate.toFixed(4));
+              }
+            });
+            updated = true;
+            sourceLabel = 'Open Exchange Rates (লাইভ)';
+          }
+        }
+      } catch (err) {
+        // Try secondary public CDN currency API
+        try {
+          const res2 = await fetch(`https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/inr.json?t=${Date.now()}`, { cache: 'no-store' });
+          if (res2.ok) {
+            const data2 = await res2.json();
+            if (data2 && data2.inr) {
+              CURRENCY_ORDER.forEach((code) => {
+                const k = code.toLowerCase();
+                if (data2.inr[k] && data2.inr[k] > 0) {
+                  const newRate = 1 / data2.inr[k];
+                  state.rates[code] = newRate;
+                  const series = CURRENCIES[code].series;
+                  series[series.length - 1] = Number(newRate.toFixed(4));
+                }
+              });
+              updated = true;
+              sourceLabel = 'Fawaz Currency API (লাইভ)';
+            }
+          }
+        } catch (err2) {}
+      }
+
+      el.refreshIcon.classList.remove('spinning');
+      updateStatusUI(updated, sourceLabel);
+      renderConverter();
+      renderMarketBoard();
+      updateChart();
+
+      if (manual) {
+        showToast(updated ? 'লাইভ মার্কেট রেট আপডেট হয়েছে' : 'ইন্টারনেট সংযোগ না থাকায় সর্বশেষ সংরক্ষিত রেট দেখানো হচ্ছে');
+      }
+    }
+
+    function selectCurrency(code) {
+      if (!CURRENCIES[code]) return;
+      state.source = code;
+      renderSelectorPills();
+      renderConverter();
+      renderMarketBoard();
+      updateChart();
+    }
+
+    function setupAutoRefresh() {
+      clearInterval(refreshTimer);
+      clearInterval(countdownTimer);
+      secondsLeft = 10;
+      if (state.autoRefresh) {
+        el.autoRefreshLabel.textContent = `লাইভ আপডেট (${secondsLeft} সেকেন্ড)`;
+        countdownTimer = setInterval(() => {
+          secondsLeft -= 1;
+          if (secondsLeft <= 0) {
+            secondsLeft = 10;
+            fetchLiveRates(false);
+          }
+          el.autoRefreshLabel.textContent = `লাইভ আপডেট (${secondsLeft} সেকেন্ড)`;
+        }, 1000);
+      } else {
+        el.autoRefreshLabel.textContent = 'লাইভ অটো-আপডেট বন্ধ';
+      }
+    }
+
+    function init() {
+      el.indiaFlagBox.innerHTML = FLAGS.INR;
+
+      try {
+        const savedTheme = localStorage.getItem('fx_inr_theme');
+        if (savedTheme && ['saffron', 'emerald', 'amethyst'].includes(savedTheme)) {
+          state.theme = savedTheme;
+        }
+      } catch (e) {}
+
+      applyTheme(state.theme);
+      renderSelectorPills();
+      renderConverter();
+      renderMarketBoard();
+      updateChart();
+      fetchLiveRates(false);
+      setupAutoRefresh();
+
+      // Event Listeners
+      el.currencySelector.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-select-currency]');
+        if (btn) selectCurrency(btn.dataset.selectCurrency);
+      });
+
+      el.marketBoard.addEventListener('click', (e) => {
+        const card = e.target.closest('[data-board-currency]');
+        if (card) {
+          selectCurrency(card.dataset.boardCurrency);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+
+      el.amountInput.addEventListener('focus', () => {
+        el.amountInput.select();
+      });
+
+      el.amountInput.addEventListener('input', (e) => {
+        const raw = e.target.value;
+        if (raw === '') {
+          state.amount = 0;
+        } else {
+          const val = parseFloat(raw);
+          state.amount = Number.isFinite(val) && val >= 0 ? val : 0;
+        }
+        renderConverter();
+      });
+
+      el.emptyInputBtn.addEventListener('click', () => {
+        state.amount = 0;
+        el.amountInput.value = '';
+        el.amountInput.focus();
+        renderConverter();
+      });
+
+      el.clearAmountBtn.addEventListener('click', () => {
+        state.amount = 100;
+        el.amountInput.value = '100';
+        renderConverter();
+      });
+
+      document.querySelectorAll('.quick-amt').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const val = Number(btn.dataset.quick);
+          state.amount = val;
+          el.amountInput.value = String(val);
+          renderConverter();
+        });
+      });
+
+      document.querySelectorAll('.theme-btn').forEach((btn) => {
+        btn.addEventListener('click', () => applyTheme(btn.dataset.themeBtn));
+      });
+
+      el.refreshBtn.addEventListener('click', () => fetchLiveRates(true));
+
+      el.autoRefreshToggle.addEventListener('change', (e) => {
+        state.autoRefresh = e.target.checked;
+        setupAutoRefresh();
+        showToast(state.autoRefresh ? 'অটো-রিফ্রেশ চালু হয়েছে' : 'অটো-রিফ্রেশ বন্ধ করা হয়েছে');
+      });
+
+      el.copyResultBtn.addEventListener('click', async () => {
+        const text = `${el.amountInput.value || 0} ${state.source} = ${el.convertedOutput.textContent} INR`;
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+          } else {
+            throw new Error('Clipboard unavailable');
+          }
+          showToast('ফলাফল কপি করা হয়েছে');
+        } catch (err) {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          try {
+            document.execCommand('copy');
+            showToast('ফলাফল কপি করা হয়েছে');
+          } catch (e2) {
+            showToast('কপি করা যায়নি');
+          }
+          document.body.removeChild(ta);
+        }
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
